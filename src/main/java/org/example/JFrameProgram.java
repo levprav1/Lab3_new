@@ -14,10 +14,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
-/**
- *
- * @author kzsbv
- */
 public class JFrameProgram extends javax.swing.JFrame {
 
     public static ParserManipulation pm = new ParserManipulation();
@@ -106,7 +102,6 @@ public class JFrameProgram extends javax.swing.JFrame {
        try {
            File file = chooser.getSelectedFile();
            rm.setReactors(pm.importData(String.valueOf(file)));
-           if(rm.getReactors().isEmpty()) throw new Exception();
            jTreeReactors.setModel(new DefaultTreeModel(rm.addInfo2GUI()));
        }catch (Exception r){
            JOptionPane.showMessageDialog (null, "Ошибка чтения файла", "Oшибка", JOptionPane.ERROR_MESSAGE);
