@@ -8,7 +8,6 @@ public class HandlerBuilder {
     private Handler xml;
     private Handler yaml;
     private Handler json;
-    private Handler nulI;
 
     public ArrayList<Reactor> getData(String path){
         setParam();
