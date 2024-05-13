@@ -5,7 +5,7 @@
  */
 package org.example;
 
-import org.example.reactors.ReactorManipulation;
+import org.example.collections.ReactorStorage;
 import org.example.parserManipulatiom.ParserManipulation;
 
 import java.io.File;
@@ -17,7 +17,7 @@ import javax.swing.tree.DefaultTreeModel;
 public class JFrameProgram extends javax.swing.JFrame {
 
     public static ParserManipulation pm = new ParserManipulation();
-    public static ReactorManipulation rm = new ReactorManipulation();
+    public static ReactorStorage rm = new ReactorStorage();
     public JFrameProgram() {
         initComponents();
         try {

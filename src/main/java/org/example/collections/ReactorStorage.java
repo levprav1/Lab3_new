@@ -1,12 +1,14 @@
-package org.example.reactors;
+package org.example.collections;
+
+import org.example.reactors.Reactor;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
 
-public class ReactorManipulation {
+public class ReactorStorage {
     private ArrayList<Reactor> reactors ;
 
-    public ReactorManipulation() {
+    public ReactorStorage() {
         reactors = new ArrayList<>();
     }
 
