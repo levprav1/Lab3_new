@@ -1,19 +1,10 @@
-package org.example;
+package org.example.manipulationBD;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.*;
+import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Iterator;
 
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.ss.usermodel.*;
 import org.example.collections.StorageBD;
 import org.example.readersBD.*;
 
@@ -38,17 +29,17 @@ public class BuilderBD {
                 + "status TEXT,"
                 + "type TEXT,"
                 + "model TEXT,"
-				+ "owner_id SMALLINT,"
+				+ "owner TEXT,"
 				+ "operator_id SMALLINT,"
 				+ "net_capacity SMALLINT,"
 				+ "design_net_capacity SMALLINT,"
 				+ "gross_capacity SMALLINT,"
 				+ "thermal_capacity SMALLINT,"
-				+ "construction_start_date DATE,"
-				+ "first_criticaly_date DATE,"
-				+ "first_grid_connection DATE,"
-				+ "commercial_operation_date DATE,"
-				+ "permanent_shutdown_date DATE"
+				+ "construction_start_date TEXT,"
+				+ "first_criticaly_date TEXT,"
+				+ "first_grid_connection TEXT,"
+				+ "commercial_operation_date TEXT,"
+				+ "permanent_shutdown_date TEXT"
 				+ ")");
 		tablesCreation.add("CREATE TABLE IF NOT EXISTS public.operating_history (" +
                 "id SERIAL PRIMARY KEY, " +
@@ -97,17 +88,13 @@ public class BuilderBD {
 		readerBDS.add(new ReaderCompanies());
     }
 
-    public String areTablesExist() {
+    public String areTablesExist() throws SQLException {
         String areExist = "БД создана";
-
-        try (Statement stmt = connector.createStatement()) {
+        Statement stmt = connector.createStatement();
             for (String tableName : tableNames) {
                 ResultSet resultSet = stmt.executeQuery("SELECT COUNT(*) FROM " + tableName);
                 if (!resultSet.next()) areExist = "БД не создана";
             }
-        }catch (SQLException e) {
-                areExist = "БД не создана";
-                }
 
         return areExist;
     }
@@ -131,48 +118,39 @@ public class BuilderBD {
         return areExist;
     }
 
-    public void createBD() {
-        try (Statement stmt = connector.createStatement()) {
+    public void createBD() throws SQLException {
+        Statement stmt = connector.createStatement();
             tablesCreation.forEach(table -> {
-                try {
-                    stmt.executeUpdate(table);
+                try{
+                stmt.executeUpdate(table);
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             });
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Ошибка создания БД", "Oшибка", JOptionPane.ERROR_MESSAGE);
-        }
+
     }
 
-    public void deleteBD() {
-        try (Statement stmt = connector.createStatement()) {
+    public void deleteBD() throws SQLException {
+        Statement stmt = connector.createStatement();
 
-            tablesDelete.forEach(table -> {
-                try {
-                    stmt.executeUpdate(table);
-                } catch (SQLException e) {
-                    JOptionPane.showMessageDialog(null, e.getMessage(), "Oшибка", JOptionPane.ERROR_MESSAGE);
-                }
-            });
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.getMessage(), "Oшибка", JOptionPane.ERROR_MESSAGE);
-        }
+        tablesDelete.forEach(table -> {
+            try {
+                stmt.executeUpdate(table);
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, e.getMessage(), "Oшибка", JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 
-    public void fillBD() throws SQLException, IOException {
+    public void fillBD() throws SQLException, IOException, ParseException {
         excelToDatabase.createTables(connector);
         parserHTML.parseHTML2BD(connector);
     }
-    public StorageBD getDataFromBD(){
+    public StorageBD getDataFromBD() throws SQLException {
         StorageBD storageBD = new StorageBD();
-        readerBDS.forEach(r -> {
-            try {
-                r.getData(connector, storageBD);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        for (ReaderBD r : readerBDS) {
+            r.getData(connector, storageBD);
+        }
         return storageBD;
     }
 

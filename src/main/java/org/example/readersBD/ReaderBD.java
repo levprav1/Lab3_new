@@ -1,6 +1,6 @@
 package org.example.readersBD;
 
-import org.example.Connector;
+import org.example.manipulationBD.Connector;
 import org.example.collections.StorageBD;
 
 import java.sql.SQLException;

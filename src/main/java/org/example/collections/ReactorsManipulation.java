@@ -1,6 +1,7 @@
 package org.example.collections;
 
 import org.example.dataBD.Unit;
+import org.example.reactors.Reactor;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
@@ -9,9 +10,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ReactorsManipulation {
-    private StorageBD storageBDInitial;
-    private  StorageBD storageBD;
-    private ReactorStorage reactorStorage;
+    private StorageBD storageBDInitial = new StorageBD();
+    private  StorageBD storageBD = new StorageBD();
+    private ReactorStorage reactorStorage = new ReactorStorage();
 
     public ReactorsManipulation() {
     }
@@ -32,6 +33,9 @@ public class ReactorsManipulation {
 
     public void setReactorStorage(ReactorStorage reactorStorage) {
         this.reactorStorage = reactorStorage;
+    }
+    public void setReactors(ArrayList<Reactor> reactors) {
+        reactorStorage.setReactors(reactors);
     }
 
     public StorageBD getStorageBD() {
