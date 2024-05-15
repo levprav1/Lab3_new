@@ -39,6 +39,8 @@ public class BuilderBD {
 				+ "first_criticaly_date TEXT,"
 				+ "first_grid_connection TEXT,"
 				+ "commercial_operation_date TEXT,"
+                + "suspended_operation_date TEXT,"
+                + "end_suspended_operation_date TEXT,"
 				+ "permanent_shutdown_date TEXT"
 				+ ")");
 		tablesCreation.add("CREATE TABLE IF NOT EXISTS public.operating_history (" +

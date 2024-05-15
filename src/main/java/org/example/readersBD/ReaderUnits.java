@@ -35,6 +35,8 @@ public class ReaderUnits implements ReaderBD{
                     result.getString("first_criticaly_date"),
                     result.getString("first_grid_connection"),
                     result.getString("commercial_operation_date"),
+                    result.getString("suspended_operation_date"),
+                    result.getString("end_suspended_operation_date"),
                     result.getString("permanent_shutdown_date")
             ));
 

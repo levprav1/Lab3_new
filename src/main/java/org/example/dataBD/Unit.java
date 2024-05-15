@@ -1,5 +1,7 @@
 package org.example.dataBD;
 
+import java.util.TreeMap;
+
 public class Unit {
     private int id;
     private int site_id;
@@ -17,11 +19,15 @@ public class Unit {
     private String first_criticaly_date;
     private String first_grid_connection;
     private String commercial_operation_date;
+    private String suspended_operation_date;
+    private String end_suspended_operation_date;
     private String permanent_shutdown_date;
     private double burnup;
+    private double first_load;
+    private TreeMap<Integer,Double> fuel_consumption;
 
 
-    public Unit(int id, int site_id, String name, String status, String type, String model, String owner, int operator_id, int net_capacity, int design_net_capacity, int gross_capacity, int thermal_capacity, String construction_start_date, String first_criticaly_date, String first_grid_connection, String commercial_operation_date, String permanent_shutdown_date) {
+    public Unit(int id, int site_id, String name, String status, String type, String model, String owner, int operator_id, int net_capacity, int design_net_capacity, int gross_capacity, int thermal_capacity, String construction_start_date, String first_criticaly_date, String first_grid_connection, String commercial_operation_date, String suspended_operation_date, String end_suspended_operation_date, String permanent_shutdown_date) {
         this.id = id;
         this.site_id = site_id;
         this.name = name;
@@ -38,6 +44,8 @@ public class Unit {
         this.first_criticaly_date = first_criticaly_date;
         this.first_grid_connection = first_grid_connection;
         this.commercial_operation_date = commercial_operation_date;
+        this.suspended_operation_date = suspended_operation_date;
+        this.end_suspended_operation_date = end_suspended_operation_date;
         this.permanent_shutdown_date = permanent_shutdown_date;
     }
 
@@ -169,6 +177,22 @@ public class Unit {
         this.commercial_operation_date = commercial_operation_date;
     }
 
+    public String getSuspended_operation_date() {
+        return suspended_operation_date;
+    }
+
+    public void setSuspended_operation_date(String suspended_operation_date) {
+        this.suspended_operation_date = suspended_operation_date;
+    }
+
+    public String getEnd_suspended_operation_date() {
+        return end_suspended_operation_date;
+    }
+
+    public void setEnd_suspended_operation_date(String end_suspended_operation_date) {
+        this.end_suspended_operation_date = end_suspended_operation_date;
+    }
+
     public String getPermanent_shutdown_date() {
         return permanent_shutdown_date;
     }
@@ -183,5 +207,21 @@ public class Unit {
 
     public void setBurnup(double burnup) {
         this.burnup = burnup;
+    }
+
+    public double getFirst_load() {
+        return first_load;
+    }
+
+    public void setFirst_load(double first_load) {
+        this.first_load = first_load;
+    }
+
+    public TreeMap<Integer, Double> getFuel_consumption() {
+        return fuel_consumption;
+    }
+
+    public void setFuel_consumption(TreeMap<Integer, Double> fuel_consumption) {
+        this.fuel_consumption = fuel_consumption;
     }
 }

@@ -14,13 +14,19 @@ import java.util.*;
 
 
 public class ParserHTML {
-    private ArrayList<String> countryLinks = new ArrayList<>();// Список для хранения ссылок на страницы стран
-    private HashMap<String, Integer> countryIdMap = new HashMap<>(); // Создаем карту для хранения соответствия названия страны и ее id в базе данных
-    private HashMap<String, Integer> siteIdMap = new HashMap<>();
-    private HashMap<String, Integer> unitIdMap = new HashMap<>();// назваание unit и id site
-    private TreeMap<String, Integer> companyIdMap = new TreeMap<>();
+    private ArrayList<String> countryLinks;// Список для хранения ссылок на страницы стран
+    private HashMap<String, Integer> countryIdMap; // Создаем карту для хранения соответствия названия страны и ее id в базе данных
+    private HashMap<String, Integer> siteIdMap;
+    private HashMap<String, Integer> unitIdMap;// название unit и id site
+    private TreeMap<String, Integer> companyIdMap;
 
     public void parseHTML2BD(Connector connector) throws SQLException, IOException, ParseException {
+        countryLinks = new ArrayList<>();
+        countryIdMap = new HashMap<>();
+        siteIdMap = new HashMap<>();
+        unitIdMap = new HashMap<>();
+        companyIdMap = new TreeMap<>();
+
         fillCountryLinks();
         Connection connection = connector.getConnection();
         fillCountryIdMap(connection);
@@ -96,24 +102,27 @@ public class ParserHTML {
                     default:
                         siteName = (reactorNameParts.length <= 2) ? reactorNameParts[0].trim() : reactorNameParts[0].trim() + "-" + reactorNameParts[1].trim();;
                 }
-                if (siteIdMap.containsKey(reactorName)) continue;
-                siteIdMap.put(reactorName, (siteIdMap.isEmpty()) ? 1 : siteIdMap.size()+1);;
-                unitIdMap.put(reactorName.trim(), siteIdMap.get(siteName));
-                // Получаем местоположение реактора
-                String location = cols.get(3).text();
-                // Добавляем данные в подготовленный SQL-запрос
-                insertSiteStatement.setString(1, siteName);
-                insertSiteStatement.setString(2, location);
-                insertSiteStatement.setInt(3, countryId);
-                // Выполняем запрос
-                insertSiteStatement.executeUpdate();
+                if (!siteIdMap.containsKey(siteName)){
+                    siteIdMap.put(siteName, (siteIdMap.isEmpty()) ? 1 : siteIdMap.size()+1);;
+                    unitIdMap.put(reactorName.trim(), siteIdMap.get(siteName));
+                    // Получаем местоположение реактора
+                    String location = cols.get(3).text();
+                    // Добавляем данные в подготовленный SQL-запрос
+                    insertSiteStatement.setString(1, siteName);
+                    insertSiteStatement.setString(2, location);
+                    insertSiteStatement.setInt(3, countryId);
+                    // Выполняем запрос
+                    insertSiteStatement.executeUpdate();
+                }else {
+                    unitIdMap.put(reactorName.trim(), siteIdMap.get(siteName));
+                }
             }
         }
         System.out.println(numUnits);
     }
 
     private void fillUnits(Connection connection) throws SQLException, IOException, ParseException {
-        String insertQuery = "INSERT INTO public.units (name, site_id, status, type, model, owner, operator_id, net_capacity, design_net_capacity, gross_capacity, thermal_capacity, construction_start_date, first_criticaly_date, first_grid_connection, commercial_operation_date, permanent_shutdown_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertQuery = "INSERT INTO public.units (name, site_id, status, type, model, owner, operator_id, net_capacity, design_net_capacity, gross_capacity, thermal_capacity, construction_start_date, first_criticaly_date, first_grid_connection, commercial_operation_date, suspended_operation_date, end_suspended_operation_date, permanent_shutdown_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement statement = connection.prepareStatement(insertQuery);
         int unit_id = 0;
         // Перебор ссылок на страницы
@@ -123,23 +132,24 @@ public class ParserHTML {
                 Document unitDoc = Jsoup.connect("https://pris.iaea.org/PRIS/CountryStatistics/ReactorDetails.aspx?current=" + i).get();
                 String unitName = unitDoc.selectFirst("#MainContent_MainContent_lblReactorName").text().trim();
                 System.out.println(unitName);
-                int site_id = siteIdMap.get(unitName);
+                int site_id = unitIdMap.get(unitName);
                 String status = unitDoc.select("#MainContent_MainContent_lblReactorStatus").text().trim();
                 String type = unitDoc.select("#MainContent_MainContent_lblType").text().trim();
                 String model = unitDoc.select("#MainContent_MainContent_lblModel").text().trim();
                 String owner;
                 try { owner = unitDoc.select("#MainContent_MainContent_hypOwnerUrl").text().trim();
-
+                    if (owner.isEmpty()) throw new Exception();
                 } catch (Exception e) {
-                    owner = unitDoc.select("#content > div > div.box > div.box-content > table > tbody > tr:nth-child(2) > td:nth-child(3) > h5").text().trim();
+                    owner = unitDoc.select("h5").get(3).text().trim();
                 }
                 String operator;
                 try {
                     operator = unitDoc.select("#MainContent_MainContent_hypOperatorUrl").text().trim();
-
+                    if (operator.isEmpty()) throw new Exception();
                 } catch (Exception e) {
-                    operator = unitDoc.select("#content > div > div.box > div.box-content > table > tbody > tr:nth-child(2) > td.last-child > h5").text().trim();
+                    operator = unitDoc.select("h5").get(4).text().trim();
                 }
+                if(operator.equals("Kozloduy Npp ,lc")) operator = "Kozloduy Nuclear power plant";
                 if (!companyIdMap.containsKey(operator))
                     companyIdMap.put(operator, (companyIdMap.isEmpty()) ? 1 : companyIdMap.size() + 1);
                 int operatorId = companyIdMap.get(operator);
@@ -151,6 +161,18 @@ public class ParserHTML {
                 String first_criticaly_date = unitDoc.select("#MainContent_MainContent_lblFirstCriticality").text().trim();
                 String first_grid_connection = unitDoc.select("#MainContent_MainContent_lblGridConnectionDate").text().trim();
                 String commercial_operation_date = unitDoc.select("#MainContent_MainContent_lblCommercialOperationDate").text().trim();
+                String suspended_operation_date;
+                try {
+                    suspended_operation_date = unitDoc.select("#MainContent_MainContent_lblLongTermShutdownDate").text().trim();
+                } catch (Exception e) {
+                    suspended_operation_date = null;
+                }
+                String end_suspended_operation_date;
+                try {
+                    end_suspended_operation_date = unitDoc.select("#MainContent_MainContent_lblRestartDate").text().trim();
+                } catch (Exception e) {
+                    end_suspended_operation_date = null;
+                }
                 String permanent_shutdown_date;
                 try {
                     permanent_shutdown_date = unitDoc.select("#MainContent_MainContent_lblPermanentShutdownDate").text().trim();
@@ -175,7 +197,9 @@ public class ParserHTML {
                 statement.setString(13, getDate(first_criticaly_date));
                 statement.setString(14, getDate(first_grid_connection));
                 statement.setString(15, getDate(commercial_operation_date));
-                statement.setString(16, getDate(permanent_shutdown_date));
+                statement.setString(16, getDate(suspended_operation_date));
+                statement.setString(17, getDate(end_suspended_operation_date));
+                statement.setString(18, getDate(permanent_shutdown_date));
                 // Выполнение запроса на вставку
                 statement.executeUpdate();
                 unit_id++;

@@ -228,15 +228,39 @@ public class JProgram extends javax.swing.JFrame {
     }//GEN-LAST:event_jButtonGetDataBDActionPerformed
 
     private void jButtonAggregateCountryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAggregateCountryActionPerformed
-        // TODO add your handling code here:
+        if(reactorsManipulation.areDataGet()){
+            try {
+                reactorsManipulation.prepareData();
+                jTableAggregate.setModel(reactorsManipulation.aggregateCountry());
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Ошибка агрегации", "Oшибка", JOptionPane.ERROR_MESSAGE);
+            }
+        }else JOptionPane.showMessageDialog(null, "Не все данные загружены", "Oшибка", JOptionPane.ERROR_MESSAGE);
+
     }//GEN-LAST:event_jButtonAggregateCountryActionPerformed
 
     private void jButtonAggregateCompanyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAggregateCompanyActionPerformed
-        // TODO add your handling code here:
+        if(reactorsManipulation.areDataGet()){
+            try {
+                reactorsManipulation.prepareData();
+                jTableAggregate.setModel(reactorsManipulation.aggregateCompany());
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Ошибка агрегации", "Oшибка", JOptionPane.ERROR_MESSAGE);
+            }
+        }else JOptionPane.showMessageDialog(null, "Не все данные загружены", "Oшибка", JOptionPane.ERROR_MESSAGE);
+
     }//GEN-LAST:event_jButtonAggregateCompanyActionPerformed
 
     private void jButtonAggregateRegionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAggregateRegionActionPerformed
-        // TODO add your handling code here:
+        if(reactorsManipulation.areDataGet()){
+            try {
+                reactorsManipulation.prepareData();
+                jTableAggregate.setModel(reactorsManipulation.aggregateRegion());
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Ошибка агрегации", "Oшибка", JOptionPane.ERROR_MESSAGE);
+            }
+        }else JOptionPane.showMessageDialog(null, "Не все данные загружены", "Oшибка", JOptionPane.ERROR_MESSAGE);
+
     }//GEN-LAST:event_jButtonAggregateRegionActionPerformed
 
     private void jButtonExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonExitActionPerformed
