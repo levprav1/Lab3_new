@@ -58,7 +58,7 @@ public class ReactorsManipulation {
         boolean areExist = true;
         try {
             if (storageBDInitial.getUnits().isEmpty()||storageBDInitial.getCountries().isEmpty()||storageBDInitial.getCompanies().isEmpty()
-            ||storageBDInitial.getSites().isEmpty()||storageBDInitial.getRegions().isEmpty()||storageBDInitial.getOperatingHistories().isEmpty()||reactorStorage.getReactors().isEmpty())
+                    ||storageBDInitial.getSites().isEmpty()||storageBDInitial.getRegions().isEmpty()||storageBDInitial.getOperatingHistories().isEmpty()||reactorStorage.getReactors().isEmpty())
                 areExist = false;
         } catch (Exception e) {
             areExist = false;
@@ -79,7 +79,6 @@ public class ReactorsManipulation {
         storageBD.setUnits ((ArrayList<Unit>) storageBD.getUnits().stream()
                 .filter(unit -> ((unit.getPermanent_shutdown_date() == null) || (getYear(unit.getPermanent_shutdown_date()) >= 2014) )&& !unit.getType().equals("HTGR"))
                 .collect(Collectors.toList()));
-        storageBD.getUnits().forEach(unit -> System.out.println(unit.getName()));
     }
 
     public void addBurnup2Units(){
@@ -89,9 +88,10 @@ public class ReactorsManipulation {
         storageBD.getUnits().forEach(u -> {
             u.setBurnup(reactorBurnupMap.getOrDefault(u.getType(), 0.0));
             if(u.getBurnup()==0.0){
-                if(u.getType().equals("LWGR")) u.setBurnup(reactorBurnupMap.getOrDefault("MAGNOX", 0.0));
-                else if(u.getType().equals("FBR")) u.setBurnup(reactorBurnupMap.getOrDefault("BN", 0.0));
-                else if(u.getType().equals("GCR")) u.setBurnup(reactorBurnupMap.getOrDefault("MAGNOX", 0.0));
+                switch (u.getType()) {
+                    case "LWGR", "GCR" -> u.setBurnup(reactorBurnupMap.getOrDefault("MAGNOX", 0.0));
+                    case "FBR" -> u.setBurnup(reactorBurnupMap.getOrDefault("BN", 0.0));
+                }
             }
         });
 
@@ -105,10 +105,11 @@ public class ReactorsManipulation {
         storageBD.getUnits().forEach(u -> {
             u.setFirst_load(reactorFirstLoadMap.getOrDefault(u.getType(), 0.0));
             if(u.getFirst_load()==0.0){
-                if(u.getType().equals("LWBR")) u.setFirst_load(reactorFirstLoadMap.getOrDefault("MAGNOX", 0.0));
-                else if(u.getType().equals("FBR")) u.setFirst_load(reactorFirstLoadMap.getOrDefault("BN", 0.0));
-                else if(u.getType().equals("GCR")) u.setFirst_load(reactorFirstLoadMap.getOrDefault("MAGNOX", 0.0));
-                else u.setFirst_load(3*0.85*u.getThermal_capacity()/u.getBurnup());
+                switch (u.getType()) {
+                    case "LWBR", "GCR" -> u.setFirst_load(reactorFirstLoadMap.getOrDefault("MAGNOX", 0.0));
+                    case "FBR" -> u.setFirst_load(reactorFirstLoadMap.getOrDefault("BN", 0.0));
+                    default -> u.setFirst_load(3 * 0.85 * u.getThermal_capacity() / u.getBurnup());
+                }
 
             }
         });
@@ -156,23 +157,31 @@ public class ReactorsManipulation {
 
     public void setOperationFuelConsumption(Unit unit){
         int firstGridConnectionYear = getYear(unit.getFirst_grid_connection());
+        int end_suspended_operation_year = getYear(unit.getEnd_suspended_operation_date());
         // Создаем TreeMap для хранения данных о потреблении топлива
         TreeMap<Integer, Double> loadFactorMap = getLoadFactorAnnualMap(unit.getId());
         TreeMap<Integer, Double> fuelConsumption = getDefaultMap();
-        if (firstGridConnectionYear < 2014) {
-            // Заполняем данные о потреблении топлива для последующих лет
-            for (int i = 2014; i <= 2024; i++) {
-                double loadFactor = getLoadFactorAVG(loadFactorMap, i);
-                double consumption = 365*unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01/1000;
-                fuelConsumption.put(i, consumption);
+        if(end_suspended_operation_year < 2014){
+            if (firstGridConnectionYear < 2014) {
+                // Заполняем данные о потреблении топлива для последующих лет
+                for (int i = 2014; i <= 2024; i++) {
+                    double loadFactor = getLoadFactorAVG(loadFactorMap, i);
+                    double consumption = unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01;
+                    fuelConsumption.put(i, consumption);
+                }
+            } else {
+                fuelConsumption.put(firstGridConnectionYear, unit.getFirst_load());
+                // Заполняем данные о потреблении топлива для последующих лет
+                for (int i = firstGridConnectionYear + 1; i <= 2024; i++) {
+                    double loadFactor = getLoadFactorAVG(loadFactorMap, i);
+                    double consumption = unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01;
+                    fuelConsumption.put(i, consumption);
+                }
             }
-        } else {
-            // Год первого подключения к сети после 2014 или в 2014
-            fuelConsumption.put(firstGridConnectionYear, unit.getFirst_load());
-            // Заполняем данные о потреблении топлива для последующих лет
-            for (int i = firstGridConnectionYear + 1; i <= 2024; i++) {
+        }else{
+            for (int i = end_suspended_operation_year; i <= 2024; i++) {
                 double loadFactor = getLoadFactorAVG(loadFactorMap, i);
-                double consumption = 365*unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01/1000;
+                double consumption = unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01;
                 fuelConsumption.put(i, consumption);
             }
         }
@@ -182,28 +191,23 @@ public class ReactorsManipulation {
     // Метод для получения коэффициента загрузки из Map
     private static double getLoadFactorAVG(TreeMap<Integer, Double> map, int year) {
         // Проверяем, есть ли значение для указанного года в Map
-        if (map.containsKey(year)) {
-            return map.get(year);
-        } else {
-            // Если значение отсутствует, возвращаем дефолтное значение 0.85
-            return 0.85;
-        }
+        // Если значение отсутствует, возвращаем дефолтное значение 85
+        return map.getOrDefault(year, 85.0);
     }
 
     private static double getLoadFactorNull(TreeMap<Integer, Double> map, int year) {
-        // Проверяем, есть ли значение для указанного года в Map
-        if (map.containsKey(year)) {
-            return map.get(year);
-        } else {
-            // Если значение отсутствует, возвращаем дефолтное значение 0
-            return 0;
-        }
+
+        return map.getOrDefault(year, 0.0);
     }
 
     private int getYear(String date){
-        String[] parts = date.split("-");
-        // Получаем третий элемент массива, который содержит год, и преобразуем его в целочисленное значение
-        return Integer.parseInt(parts[2]);
+        try{
+            String[] parts = date.split("-");
+            // Получаем третий элемент массива, который содержит год, и преобразуем его в целочисленное значение
+            return Integer.parseInt(parts[2]);
+        }catch(Exception e){
+            return -1;
+        }
     }
 
     public void setUnderConstrFuelConsumption(Unit unit){
@@ -219,7 +223,7 @@ public class ReactorsManipulation {
         // Заполняем данные о потреблении топлива для последующих лет
         for (int i = 2014; i <= 2024; i++) {
             double loadFactor = getLoadFactorNull(loadFactorMap, i);
-            double consumption = 365*unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01/1000;
+            double consumption = unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01;
             fuelConsumption.put(i, consumption);
         }
 
@@ -234,7 +238,7 @@ public class ReactorsManipulation {
         // Заполняем данные о потреблении топлива для последующих лет
         for (int i = 2014; i <= shutdownYear; i++) {
             double loadFactor = getLoadFactorNull(loadFactorMap, i);
-            double consumption =365* unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01/1000;
+            double consumption = unit.getThermal_capacity() / unit.getBurnup() * loadFactor* 0.01;
             fuelConsumption.put(i, consumption);
         }
 
@@ -245,6 +249,8 @@ public class ReactorsManipulation {
         model.addColumn("Компания");
         model.addColumn("Объем ежегодного потребления, т.");
         model.addColumn("Год");
+
+
 
         storageBD.getCompanies().forEach(company -> {
             TreeMap<Integer, Double> aggregatedFuelConsumption = new TreeMap<>();
@@ -258,7 +264,6 @@ public class ReactorsManipulation {
                     model.addRow(new Object[]{company.getCompany(), consumption, year})
             );
         });
-        //JTable table = new JTable(model);
         return model;
     }
 
@@ -272,12 +277,9 @@ public class ReactorsManipulation {
             TreeMap<Integer, Double> aggregatedFuelConsumption = new TreeMap<>();
             storageBD.getUnits().stream()
                     .filter(unit -> {
-                        for (Site site : storageBD.getSites()) {
-                            if (unit.getSite_id() == site.getCountry_id()) {
-                                return true;
-                            }
-                        }
-                        return false;
+                        int siteId = unit.getSite_id();
+                        if(storageBD.getSites().get(siteId-1).getCountry_id() == country.getId()) return true;
+                        else return false;
                     })
                     .forEach(unit -> unit.getFuel_consumption().forEach((year, consumption) ->
                             aggregatedFuelConsumption.merge(year, consumption, Double::sum)
@@ -301,16 +303,10 @@ public class ReactorsManipulation {
             TreeMap<Integer, Double> aggregatedFuelConsumption = new TreeMap<>();
             storageBD.getUnits().stream()
                     .filter(unit -> {
-                        for (Site site : storageBD.getSites()) {
-                            if (unit.getSite_id() == site.getCountry_id()) {
-                                for (Country country : storageBD.getCountries()) {
-                                    if (site.getCountry_id() == country.getRegion_id() && country.getRegion_id() == region.getId()) {
-                                        return true;
-                                    }
-                                }
-                            }
-                        }
-                        return false;
+                        int siteId = unit.getSite_id();
+                        int countryId = storageBD.getSites().get(siteId-1).getCountry_id();
+                        if(storageBD.getCountries().get(countryId-1).getRegion_id() == region.getId()) return true;
+                        else return false;
                     })
                     .forEach(unit -> unit.getFuel_consumption().forEach((year, consumption) ->
                             aggregatedFuelConsumption.merge(year, consumption, Double::sum)

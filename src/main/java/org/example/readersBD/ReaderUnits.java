@@ -25,7 +25,7 @@ public class ReaderUnits implements ReaderBD{
                     result.getString("status"),
                     result.getString("type"),
                     result.getString("model"),
-                    result.getString("owner"),
+                    result.getInt("owner_id"),
                     result.getInt("operator_id"),
                     result.getInt("net_capacity"),
                     result.getInt("design_net_capacity"),

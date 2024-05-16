@@ -248,7 +248,6 @@ public class JProgram extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(null, "Ошибка агрегации", "Oшибка", JOptionPane.ERROR_MESSAGE);
             }
         }else JOptionPane.showMessageDialog(null, "Не все данные загружены", "Oшибка", JOptionPane.ERROR_MESSAGE);
-
     }//GEN-LAST:event_jButtonAggregateCompanyActionPerformed
 
     private void jButtonAggregateRegionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAggregateRegionActionPerformed

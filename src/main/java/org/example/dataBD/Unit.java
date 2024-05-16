@@ -9,7 +9,7 @@ public class Unit {
     private String status;
     private String type;
     private String model;
-    private String owner;
+    private int owner_id;
     private int operator_id;
     private int net_capacity;
     private int design_net_capacity;
@@ -27,14 +27,14 @@ public class Unit {
     private TreeMap<Integer,Double> fuel_consumption;
 
 
-    public Unit(int id, int site_id, String name, String status, String type, String model, String owner, int operator_id, int net_capacity, int design_net_capacity, int gross_capacity, int thermal_capacity, String construction_start_date, String first_criticaly_date, String first_grid_connection, String commercial_operation_date, String suspended_operation_date, String end_suspended_operation_date, String permanent_shutdown_date) {
+    public Unit(int id, int site_id, String name, String status, String type, String model, int owner_id, int operator_id, int net_capacity, int design_net_capacity, int gross_capacity, int thermal_capacity, String construction_start_date, String first_criticaly_date, String first_grid_connection, String commercial_operation_date, String suspended_operation_date, String end_suspended_operation_date, String permanent_shutdown_date) {
         this.id = id;
         this.site_id = site_id;
         this.name = name;
         this.status = status;
         this.type = type;
         this.model = model;
-        this.owner = owner;
+        this.owner_id = owner_id;
         this.operator_id = operator_id;
         this.net_capacity = net_capacity;
         this.design_net_capacity = design_net_capacity;
@@ -97,12 +97,12 @@ public class Unit {
         this.model = model;
     }
 
-    public String getOwner() {
-        return owner;
+    public int getOwner_id() {
+        return owner_id;
     }
 
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setOwner_id(int owner_id) {
+        this.owner_id = owner_id;
     }
 
     public int getOperator_id() {

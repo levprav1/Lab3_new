@@ -29,7 +29,7 @@ public class BuilderBD {
                 + "status TEXT,"
                 + "type TEXT,"
                 + "model TEXT,"
-				+ "owner TEXT,"
+				+ "owner_id SMALLINT,"
 				+ "operator_id SMALLINT,"
 				+ "net_capacity SMALLINT,"
 				+ "design_net_capacity SMALLINT,"

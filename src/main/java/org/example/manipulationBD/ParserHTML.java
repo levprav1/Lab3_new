@@ -118,20 +118,17 @@ public class ParserHTML {
                 }
             }
         }
-        System.out.println(numUnits);
     }
 
     private void fillUnits(Connection connection) throws SQLException, IOException, ParseException {
-        String insertQuery = "INSERT INTO public.units (name, site_id, status, type, model, owner, operator_id, net_capacity, design_net_capacity, gross_capacity, thermal_capacity, construction_start_date, first_criticaly_date, first_grid_connection, commercial_operation_date, suspended_operation_date, end_suspended_operation_date, permanent_shutdown_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertQuery = "INSERT INTO public.units (name, site_id, status, type, model, owner_id, operator_id, net_capacity, design_net_capacity, gross_capacity, thermal_capacity, construction_start_date, first_criticaly_date, first_grid_connection, commercial_operation_date, suspended_operation_date, end_suspended_operation_date, permanent_shutdown_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement statement = connection.prepareStatement(insertQuery);
         int unit_id = 0;
         // Перебор ссылок на страницы
         for (int i = 1; i < 1125 || i == 2121 || i == 2127; i++) {
-            System.out.println(i);
             try {
                 Document unitDoc = Jsoup.connect("https://pris.iaea.org/PRIS/CountryStatistics/ReactorDetails.aspx?current=" + i).get();
                 String unitName = unitDoc.selectFirst("#MainContent_MainContent_lblReactorName").text().trim();
-                System.out.println(unitName);
                 int site_id = unitIdMap.get(unitName);
                 String status = unitDoc.select("#MainContent_MainContent_lblReactorStatus").text().trim();
                 String type = unitDoc.select("#MainContent_MainContent_lblType").text().trim();
@@ -141,13 +138,20 @@ public class ParserHTML {
                     if (owner.isEmpty()) throw new Exception();
                 } catch (Exception e) {
                     owner = unitDoc.select("h5").get(3).text().trim();
+                    if(owner.isEmpty()) owner= "No data";
                 }
+                if(owner.equals("Kozloduy Npp ,lc")) owner = "Kozloduy Nuclear power plant";
+                if (!companyIdMap.containsKey(owner))
+                    companyIdMap.put(owner, (companyIdMap.isEmpty()) ? 1 : companyIdMap.size() + 1);
+                int ownerId = companyIdMap.get(owner);
+
                 String operator;
                 try {
                     operator = unitDoc.select("#MainContent_MainContent_hypOperatorUrl").text().trim();
                     if (operator.isEmpty()) throw new Exception();
                 } catch (Exception e) {
                     operator = unitDoc.select("h5").get(4).text().trim();
+                    if(operator.isEmpty()) operator= "No data";
                 }
                 if(operator.equals("Kozloduy Npp ,lc")) operator = "Kozloduy Nuclear power plant";
                 if (!companyIdMap.containsKey(operator))
@@ -186,7 +190,7 @@ public class ParserHTML {
                 statement.setString(3, status);
                 statement.setString(4, type);
                 statement.setString(5, model);
-                statement.setString(6, owner);
+                statement.setInt(6, ownerId);
                 statement.setInt(7, operatorId);
                 statement.setInt(8, net_capacity);
                 statement.setInt(9, design_net_capacity);
@@ -207,7 +211,6 @@ public class ParserHTML {
                 if(i==1124) i = 2120;
                 if(i==2121) i = 2126;
             }catch (Exception e){
-                e.printStackTrace();
             }
 
     }
